@@ -1,0 +1,62 @@
+import java.io.*;
+import java.util.*;
+class Student implements Serializable {
+    int id; String name; double grade;
+    Student(int id, String name, double grade){ this.id=id; this.name=name; this.grade=grade; }
+    public String toString(){ return "ID:"+id+", Name:"+name+", Grade:"+grade; }
+}
+class Employee implements Serializable {
+    int id; String name, desig; double salary;
+    Employee(int id, String name, String desig, double salary){ this.id=id; this.name=name; this.desig=desig; this.salary=salary; }
+    public String toString(){ return "ID:"+id+", Name:"+name+", Desig:"+desig+", Salary:"+salary; }
+}
+public class MainProgram {
+    static final String STUDENT_FILE="student.dat", EMP_FILE="emp.dat";
+    public static void main(String[] args) throws Exception{
+        Scanner sc=new Scanner(System.in); int ch;
+        do{
+            System.out.println("\n1.Sum Integers 2.Student Serialize 3.Employee System 4.Exit");
+            ch=sc.nextInt(); sc.nextLine();
+            switch(ch){
+                case 1: // Part A
+                    System.out.println("Enter integers:"); String[] arr=sc.nextLine().split(" "); int sum=0;
+                    for(String s:arr) sum+=Integer.parseInt(s);
+                    System.out.println("Sum: "+sum); break;
+                case 2: // Part B
+                    System.out.print("ID:"); int id=sc.nextInt(); sc.nextLine();
+                    System.out.print("Name:"); String name=sc.nextLine();
+                    System.out.print("Grade:"); double g=sc.nextDouble();
+                    Student sObj=new Student(id,name,g);
+                    try(ObjectOutputStream oos=new ObjectOutputStream(new FileOutputStream(STUDENT_FILE))){
+                        oos.writeObject(sObj); }
+                    try(ObjectInputStream ois=new ObjectInputStream(new FileInputStream(STUDENT_FILE))){
+                        System.out.println("Deserialized: "+ois.readObject()); } break;
+                case 3: // Part C
+                    int ec;
+                    do{
+                        System.out.println("\n1.Add Employee 2.Display All 3.Back"); ec=sc.nextInt(); sc.nextLine();
+                        switch(ec){
+                            case 1:
+                                System.out.print("ID:"); int eid=sc.nextInt(); sc.nextLine();
+                                System.out.print("Name:"); String ename=sc.nextLine();
+                                System.out.print("Desig:"); String desig=sc.nextLine();
+                                System.out.print("Salary:"); double sal=sc.nextDouble();
+                                Employee e=new Employee(eid,ename,desig,sal);
+                                try(ObjectOutputStream oos=new AppendableObjectOutputStream(new FileOutputStream(EMP_FILE,true))){
+                                    oos.writeObject(e); } break;
+                            case 2:
+                                try(ObjectInputStream ois=new ObjectInputStream(new FileInputStream(EMP_FILE))){
+                                    System.out.println("\nEmployees:");
+                                    while(true) System.out.println(ois.readObject());
+                                }catch(EOFException ex){} break;
+                        }
+                    }while(ec!=3); break;
+            }
+        }while(ch!=4); sc.close();
+    }
+static class AppendableObjectOutputStream extends ObjectOutputStream{
+        AppendableObjectOutputStream(OutputStream out) throws IOException{ super(out); }
+        protected void writeStreamHeader() throws IOException{
+            File f=new File(EMP_FILE); if(f.length()==0) super.writeStreamHeader(); else reset(); }
+    }
+}
